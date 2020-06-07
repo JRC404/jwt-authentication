@@ -7,6 +7,19 @@ const secret = require('../config').secret; //contains secret key used to sign t
 const User = require("../models/User");
 
 router.post("/register", (req, res) => {
+    const hashedPassword = bcrypt.hashSync(req.body.password, 10);
+
+    User.create({
+        email: req.body.email,
+        password: hashedPassword,
+    }).then((user) => {
+        // create a token
+        let token = jwt.sign({ id: user._id }, secret, {
+            expiresIn: 86400 // expires in 24 hours
+        })
+        return res.status(201).send({ auth: true, token: token })
+    })
+        .catch((err) => { return res.send(err) })
 })
 
 router.post("/login", (req, res) => {
