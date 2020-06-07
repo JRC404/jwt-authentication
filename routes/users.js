@@ -19,8 +19,28 @@ router.post("/register", (req, res) => {
         })
         return res.status(201).send({ auth: true, token: token })
     })
-        .catch((err) => { return res.send(err) })
+        .catch((err) => {return res.send(err)})
 })
+
+router.get('/current-user', function (req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token)
+        return res.status(403).send({ auth: false, msg: 'No token provided.' });
+
+    jwt.verify(token, secret, function (err, decoded) {
+        if (err)
+            return res.status(500).send({ auth: false, msg: 'Failed to authenticate token.' });
+
+        User.findById(decoded.id, { password: 0 }, function (err, user) {
+            if (err) return res.status(500).send("There was a problem finding the user.");
+            if (!user) return res.status(404).send("No user found.");
+
+            return res.status(200).send(user);
+        });
+    });
+});
 
 router.post("/login", (req, res) => {
 })
